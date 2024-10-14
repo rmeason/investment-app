@@ -21,7 +21,7 @@ def get_crypto_data(crypto):
         logging.error(f"Error fetching crypto data for {crypto}: {e}")
         return None
 
-def save_crypto_data(crypto, data):
+def save_crypto_data(crypto, data, sentiment_score=None):
     if data is None or crypto not in data:
         logging.warning(f"No valid data to save for {crypto}.")
         return
@@ -31,12 +31,12 @@ def save_crypto_data(crypto, data):
     
     # Create table if it doesn't exist
     cursor.execute('''CREATE TABLE IF NOT EXISTS crypto
-                      (name TEXT, time TEXT, price REAL)''')
+                      (name TEXT, time TEXT, price REAL, sentiment_score REAL)''')
 
     # Insert crypto data
     price = data[crypto]['usd']
-    cursor.execute("INSERT INTO crypto (name, time, price) VALUES (?, datetime('now'), ?)",
-                   (crypto, price))
+    cursor.execute("INSERT INTO crypto (name, time, price, sentiment_score) VALUES (?, datetime('now'), ?, ?)",
+                   (crypto, price, sentiment_score))
 
     conn.commit()
     conn.close()
@@ -44,6 +44,10 @@ def save_crypto_data(crypto, data):
 
 if __name__ == "__main__":
     crypto_symbols = ['bitcoin', 'ethereum', 'dogecoin']  # BTC, ETH, DOGE
+    sentiment_scores = {}  # Dictionary to hold sentiment scores for each crypto
+
+    # Here you could fetch sentiment scores from your sentiment analysis script
     for symbol in crypto_symbols:
         crypto_data = get_crypto_data(symbol)
-        save_crypto_data(symbol, crypto_data)
+        sentiment_score = sentiment_scores.get(symbol)  # Assume this comes from news sentiment analysis
+        save_crypto_data(symbol, crypto_data, sentiment_score)
